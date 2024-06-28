@@ -141,10 +141,10 @@ where
         let rp = (opcode & !rp_mask >> 4).into();
 
         let alu_mask = !0x38;
-        let alu = (opcode & !alu_mask >> 5).into();
+        let alu = (opcode & !alu_mask >> 3).into();
 
         let ddd_mask = !0x38;
-        let ddd = (opcode & !ddd_mask >> 5).into();
+        let ddd = (opcode & !ddd_mask >> 3).into();
 
         let sss_mask = !0x07;
         let sss = (opcode & !sss_mask).into();
