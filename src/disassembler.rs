@@ -6,7 +6,9 @@ pub type DatHi = Data;
 pub type AddLo = DatLo;
 pub type AddHi = DatHi;
 
-#[derive(Debug)]
+pub type Addr = Data;
+
+#[derive(Debug, Clone, Copy)]
 pub enum AluMode {
     Add,
     Adc,
@@ -34,7 +36,7 @@ impl From<u8> for AluMode {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Register {
     B,
     C,
@@ -62,7 +64,7 @@ impl From<u8> for Register {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum RegisterPair {
     BC,
     DE,
@@ -78,6 +80,34 @@ impl From<u8> for RegisterPair {
             2 => Self::FH,
             3 => Self::SP,
             _ => panic!("{value} is not a valid for a register pair"),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum CarryCode {
+    Nz,
+    Z,
+    Nc,
+    C,
+    Po,
+    Pe,
+    P,
+    N,
+}
+
+impl From<u8> for CarryCode {
+    fn from(value: u8) -> Self {
+        match value {
+            0 => Self::Nz,
+            1 => Self::Z,
+            2 => Self::Nc,
+            3 => Self::C,
+            4 => Self::Po,
+            5 => Self::Pe,
+            6 => Self::P,
+            7 => Self::N,
+            _ => panic!("{value} is not a valid carry code"),
         }
     }
 }
@@ -106,9 +136,18 @@ pub enum Instruction {
     Stc,
     Lda(AddLo, AddHi),
     Cmc,
-    Mov(AddLo, AddHi),
+    Mov(Register, Register),
     Hlt,
-    Alu(AluMode, Register),
+    AluR(AluMode, Register),
+    Rcc(CarryCode),
+    Pop(RegisterPair),
+    Jcc(CarryCode, AddLo, AddHi),
+    Jmp(AddLo, AddHi),
+    Ccc(CarryCode, AddLo, AddHi),
+    Push(RegisterPair),
+    AluI(AluMode, Data),
+    Rst(Addr),
+    Ret,
     Idfk, // keep this for debugging
 }
 
@@ -138,13 +177,19 @@ where
         let opcode = self.bytes.next()?;
 
         let rp_mask = !0x30;
-        let rp = (opcode & !rp_mask >> 4).into();
+        let rp = ((opcode & !rp_mask) >> 4).into();
+
+        let cc_mask = !0x30;
+        let cc = ((opcode & !cc_mask) >> 4).into();
 
         let alu_mask = !0x38;
-        let alu = (opcode & !alu_mask >> 3).into();
+        let alu = ((opcode & !alu_mask) >> 3).into();
 
         let ddd_mask = !0x38;
-        let ddd = (opcode & !ddd_mask >> 3).into();
+        let ddd = ((opcode & !ddd_mask) >> 3).into();
+
+        let n_mask = !0x38;
+        let n = ((opcode & !n_mask) >> 3).into();
 
         let sss_mask = !0x07;
         let sss = (opcode & !sss_mask).into();
@@ -194,11 +239,29 @@ where
         } else if opcode ^ 0x3F == 0 {
             Some(Instruction::Cmc)
         } else if opcode & ddd_mask & sss_mask ^ 0x40 == 0 {
-            Some(Instruction::Mov(self.bytes.next()?, self.bytes.next()?))
+            Some(Instruction::Mov(ddd, sss))
         } else if opcode ^ 0x76 == 0 {
             Some(Instruction::Hlt)
         } else if opcode & alu_mask & sss_mask ^ 0x80 == 0 {
-            Some(Instruction::Alu(alu, sss))
+            Some(Instruction::AluR(alu, sss))
+        } else if opcode & cc_mask ^ 0xC0 == 0 {
+            Some(Instruction::Rcc(cc))
+        } else if opcode & rp_mask ^ 0xC1 == 0 {
+            Some(Instruction::Pop(rp))
+        } else if opcode & cc_mask ^ 0xC2 == 0 {
+            Some(Instruction::Jcc(cc, self.bytes.next()?, self.bytes.next()?))
+        } else if opcode ^ 0xC3 == 0 {
+            Some(Instruction::Jmp(self.bytes.next()?, self.bytes.next()?))
+        } else if opcode & cc_mask ^ 0xC4 == 0 {
+            Some(Instruction::Ccc(cc, self.bytes.next()?, self.bytes.next()?))
+        } else if opcode & rp_mask ^ 0xC5 == 0 {
+            Some(Instruction::Push(rp))
+        } else if opcode & alu_mask ^ 0xC6 == 0 {
+            Some(Instruction::AluI(alu, self.bytes.next()?))
+        } else if opcode & n_mask ^ 0xC7 == 0 {
+            Some(Instruction::Rst(n))
+        } else if opcode ^ 0xC9 == 0 {
+            Some(Instruction::Ret)
         } else {
             Some(Instruction::Idfk)
         }
