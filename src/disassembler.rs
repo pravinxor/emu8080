@@ -6,6 +6,7 @@ pub type DatHi = Data;
 pub type AddLo = DatLo;
 pub type AddHi = DatHi;
 
+#[derive(Debug)]
 pub enum Register {
     B,
     C,
@@ -33,6 +34,7 @@ impl From<u8> for Register {
     }
 }
 
+#[derive(Debug)]
 pub enum RegisterPair {
     BC,
     DE,
@@ -52,6 +54,7 @@ impl From<u8> for RegisterPair {
     }
 }
 
+#[derive(Debug)]
 pub enum Instruction {
     NOP,
     LXI(RegisterPair, DatLo, DatHi),
@@ -72,6 +75,8 @@ pub enum Instruction {
     LHLD(AddLo, AddHi),
     CMA,
     STA(AddLo, AddHi),
+    STC,
+    IDK,
 }
 
 pub struct Disassembler<I>
@@ -85,7 +90,7 @@ impl<B> Disassembler<B>
 where
     B: Iterator<Item = u8>,
 {
-    fn new(bytes: B) -> Self {
+    pub fn new(bytes: B) -> Self {
         Self { bytes }
     }
 }
@@ -105,7 +110,7 @@ where
         let ddd_mask = !0x38;
         let ddd = (opcode & !ddd_mask >> 5).into();
 
-        return if opcode ^ 0x00 == 0 {
+        if opcode == 0 {
             Some(Instruction::NOP)
         } else if opcode & rp_mask ^ 0x01 == 0 {
             Some(Instruction::LXI(rp, self.bytes.next()?, self.bytes.next()?))
@@ -139,14 +144,14 @@ where
             Some(Instruction::DAA)
         } else if opcode ^ 0x2A == 0 {
             Some(Instruction::LHLD(self.bytes.next()?, self.bytes.next()?))
-        } else if opcode ^ 0x2A == 0 {
+        } else if opcode ^ 0x2F == 0 {
             Some(Instruction::CMA)
         } else if opcode ^ 0x32 == 0 {
             Some(Instruction::STA(self.bytes.next()?, self.bytes.next()?))
-        } else if opcode ^ 0x32 == 0 {
-            Some(Instruction::STA(self.bytes.next()?, self.bytes.next()?))
+        } else if opcode ^ 0x37 == 0 {
+            Some(Instruction::STC)
         } else {
-            None
-        };
+            Some(Instruction::IDK)
+        }
     }
 }
