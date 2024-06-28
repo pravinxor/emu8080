@@ -56,27 +56,27 @@ impl From<u8> for RegisterPair {
 
 #[derive(Debug)]
 pub enum Instruction {
-    NOP,
-    LXI(RegisterPair, DatLo, DatHi),
-    STAX(RegisterPair),
-    INX(RegisterPair),
-    INR(Register),
-    DCR(Register),
-    MVI(Register, Data),
-    DAD(RegisterPair),
-    LDAX(RegisterPair),
-    DCX(RegisterPair),
-    RLC,
-    RRC,
-    RAL,
-    RAR,
-    SHLD(AddLo, AddHi),
-    DAA,
-    LHLD(AddLo, AddHi),
-    CMA,
-    STA(AddLo, AddHi),
-    STC,
-    IDK,
+    Nop,
+    Lxi(RegisterPair, DatLo, DatHi),
+    Stax(RegisterPair),
+    Inx(RegisterPair),
+    Inr(Register),
+    Dcr(Register),
+    Mvi(Register, Data),
+    Dad(RegisterPair),
+    Ldax(RegisterPair),
+    Dcx(RegisterPair),
+    Rlc,
+    Rrc,
+    Ral,
+    Rar,
+    Shld(AddLo, AddHi),
+    Daa,
+    Lhld(AddLo, AddHi),
+    Cma,
+    Sta(AddLo, AddHi),
+    Stc,
+    Idfk, // keep this for debugging
 }
 
 pub struct Disassembler<I>
@@ -111,47 +111,47 @@ where
         let ddd = (opcode & !ddd_mask >> 5).into();
 
         if opcode == 0 {
-            Some(Instruction::NOP)
+            Some(Instruction::Nop)
         } else if opcode & rp_mask ^ 0x01 == 0 {
-            Some(Instruction::LXI(rp, self.bytes.next()?, self.bytes.next()?))
+            Some(Instruction::Lxi(rp, self.bytes.next()?, self.bytes.next()?))
         } else if opcode & rp_mask ^ 0x02 == 0 {
-            Some(Instruction::STAX(rp))
+            Some(Instruction::Stax(rp))
         } else if opcode & rp_mask ^ 0x03 == 0 {
-            Some(Instruction::INX(rp))
+            Some(Instruction::Inx(rp))
         } else if opcode & ddd_mask ^ 0x04 == 0 {
-            Some(Instruction::INR(ddd))
+            Some(Instruction::Inr(ddd))
         } else if opcode & ddd_mask ^ 0x05 == 0 {
-            Some(Instruction::DCR(ddd))
+            Some(Instruction::Dcr(ddd))
         } else if opcode & ddd_mask ^ 0x06 == 0 {
-            Some(Instruction::MVI(ddd, self.bytes.next()?))
+            Some(Instruction::Mvi(ddd, self.bytes.next()?))
         } else if opcode & rp_mask ^ 0x09 == 0 {
-            Some(Instruction::DAD(rp))
+            Some(Instruction::Dad(rp))
         } else if opcode & rp_mask ^ 0x0A == 0 {
-            Some(Instruction::LDAX(rp))
+            Some(Instruction::Ldax(rp))
         } else if opcode & rp_mask ^ 0x0B == 0 {
-            Some(Instruction::DCX(rp))
+            Some(Instruction::Dcx(rp))
         } else if opcode ^ 0x07 == 0 {
-            Some(Instruction::RLC)
+            Some(Instruction::Rlc)
         } else if opcode ^ 0x0F == 0 {
-            Some(Instruction::RRC)
+            Some(Instruction::Rrc)
         } else if opcode ^ 0x17 == 0 {
-            Some(Instruction::RAL)
+            Some(Instruction::Ral)
         } else if opcode ^ 0x1F == 0 {
-            Some(Instruction::RAR)
+            Some(Instruction::Rar)
         } else if opcode ^ 0x22 == 0 {
-            Some(Instruction::SHLD(self.bytes.next()?, self.bytes.next()?))
+            Some(Instruction::Shld(self.bytes.next()?, self.bytes.next()?))
         } else if opcode ^ 0x27 == 0 {
-            Some(Instruction::DAA)
+            Some(Instruction::Daa)
         } else if opcode ^ 0x2A == 0 {
-            Some(Instruction::LHLD(self.bytes.next()?, self.bytes.next()?))
+            Some(Instruction::Lhld(self.bytes.next()?, self.bytes.next()?))
         } else if opcode ^ 0x2F == 0 {
-            Some(Instruction::CMA)
+            Some(Instruction::Cma)
         } else if opcode ^ 0x32 == 0 {
-            Some(Instruction::STA(self.bytes.next()?, self.bytes.next()?))
+            Some(Instruction::Sta(self.bytes.next()?, self.bytes.next()?))
         } else if opcode ^ 0x37 == 0 {
-            Some(Instruction::STC)
+            Some(Instruction::Stc)
         } else {
-            Some(Instruction::IDK)
+            Some(Instruction::Idfk)
         }
     }
 }
