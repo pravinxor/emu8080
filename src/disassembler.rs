@@ -1,12 +1,13 @@
 pub type Data = u8;
 
+pub type Port = Data;
+pub type Addr = Data;
+
 pub type DatLo = Data;
 pub type DatHi = Data;
 
 pub type AddLo = DatLo;
 pub type AddHi = DatHi;
-
-pub type Addr = Data;
 
 #[derive(Debug, Clone, Copy)]
 pub enum AluMode {
@@ -148,6 +149,14 @@ pub enum Instruction {
     AluI(AluMode, Data),
     Rst(Addr),
     Ret,
+    Call(AddLo, AddHi),
+    Out(Port),
+    In(Port),
+    Xthl,
+    Pchl,
+    Di,
+    Sphl,
+    Ei,
     Idfk, // keep this for debugging
 }
 
@@ -262,6 +271,22 @@ where
             Some(Instruction::Rst(n))
         } else if opcode ^ 0xC9 == 0 {
             Some(Instruction::Ret)
+        } else if opcode ^ 0xCD == 0 {
+            Some(Instruction::Call(self.bytes.next()?, self.bytes.next()?))
+        } else if opcode ^ 0xD3 == 0 {
+            Some(Instruction::Out(self.bytes.next()?))
+        } else if opcode ^ 0xDB == 0 {
+            Some(Instruction::In(self.bytes.next()?))
+        } else if opcode ^ 0xE3 == 0 {
+            Some(Instruction::Xthl)
+        } else if opcode ^ 0xE9 == 0 {
+            Some(Instruction::Pchl)
+        } else if opcode ^ 0xF3 == 0 {
+            Some(Instruction::Di)
+        } else if opcode ^ 0xF9 == 0 {
+            Some(Instruction::Sphl)
+        } else if opcode ^ 0xFB == 0 {
+            Some(Instruction::Ei)
         } else {
             Some(Instruction::Idfk)
         }
