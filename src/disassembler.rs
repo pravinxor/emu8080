@@ -1,3 +1,5 @@
+use num_enum::FromPrimitive;
+
 pub type Data = u8;
 
 pub type Port = Data;
@@ -9,8 +11,10 @@ pub type DatHi = Data;
 pub type AddLo = DatLo;
 pub type AddHi = DatHi;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, FromPrimitive)]
+#[repr(u8)]
 pub enum AluMode {
+    #[num_enum(default)]
     Add,
     Adc,
     Sub,
@@ -21,23 +25,8 @@ pub enum AluMode {
     Cmp,
 }
 
-impl From<u8> for AluMode {
-    fn from(value: u8) -> Self {
-        match value {
-            0 => Self::Add,
-            1 => Self::Adc,
-            2 => Self::Sub,
-            3 => Self::Sbb,
-            4 => Self::Ana,
-            5 => Self::Xra,
-            6 => Self::Ora,
-            7 => Self::Cmp,
-            _ => panic!("{value} is not valid for an ALU"),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, FromPrimitive)]
+#[repr(u8)]
 pub enum Register {
     B,
     C,
@@ -46,47 +35,25 @@ pub enum Register {
     H,
     L,
     HL,
+    #[num_enum(default)]
     A,
 }
 
-impl From<u8> for Register {
-    fn from(value: u8) -> Self {
-        match value {
-            0 => Self::B,
-            1 => Self::C,
-            2 => Self::D,
-            3 => Self::E,
-            4 => Self::H,
-            5 => Self::L,
-            6 => Self::HL,
-            7 => Self::A,
-            _ => panic!("{value} is not valid for a Register"),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, FromPrimitive)]
+#[repr(u8)]
 pub enum RegisterPair {
     BC,
     DE,
     FH,
     SP, // Stack pointer
+    #[num_enum(default)]
+    Invalid,
 }
 
-impl From<u8> for RegisterPair {
-    fn from(value: u8) -> Self {
-        match value {
-            0 => Self::BC,
-            1 => Self::DE,
-            2 => Self::FH,
-            3 => Self::SP,
-            _ => panic!("{value} is not a valid for a register pair"),
-        }
-    }
-}
-
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, FromPrimitive)]
+#[repr(u8)]
 pub enum CarryCode {
+    #[num_enum(default)]
     Nz,
     Z,
     Nc,
@@ -95,22 +62,6 @@ pub enum CarryCode {
     Pe,
     P,
     N,
-}
-
-impl From<u8> for CarryCode {
-    fn from(value: u8) -> Self {
-        match value {
-            0 => Self::Nz,
-            1 => Self::Z,
-            2 => Self::Nc,
-            3 => Self::C,
-            4 => Self::Po,
-            5 => Self::Pe,
-            6 => Self::P,
-            7 => Self::N,
-            _ => panic!("{value} is not a valid carry code"),
-        }
-    }
 }
 
 #[derive(Debug)]
