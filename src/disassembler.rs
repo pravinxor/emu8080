@@ -157,7 +157,6 @@ pub enum Instruction {
     Di,
     Sphl,
     Ei,
-    Idfk, // keep this for debugging
 }
 
 pub struct Disassembler<I>
@@ -288,7 +287,7 @@ where
         } else if opcode ^ 0xFB == 0 {
             Some(Instruction::Ei)
         } else {
-            Some(Instruction::Idfk)
+            Some(Instruction::Nop)
         }
     }
 }
