@@ -193,7 +193,7 @@ where
             Some(Instruction::Sta(self.bytes.next()?, self.bytes.next()?))
         } else if opcode ^ 0x37 == 0 {
             Some(Instruction::Stc)
-        } else if opcode ^ 0x32 == 0 {
+        } else if opcode ^ 0x3A == 0 {
             Some(Instruction::Lda(self.bytes.next()?, self.bytes.next()?))
         } else if opcode ^ 0x3F == 0 {
             Some(Instruction::Cmc)
