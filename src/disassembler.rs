@@ -148,7 +148,7 @@ where
         let ddd = ((opcode & !ddd_mask) >> 3).into();
 
         let n_mask = !0x38;
-        let n = ((opcode & !n_mask) >> 3).into();
+        let n = (opcode & !n_mask) >> 3;
 
         let sss_mask = !0x07;
         let sss = (opcode & !sss_mask).into();
