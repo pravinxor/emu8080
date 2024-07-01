@@ -1,15 +1,10 @@
 use num_enum::FromPrimitive;
 
 pub type Data = u8;
+pub type Port = u8;
 
-pub type Port = Data;
-pub type Addr = Data;
-
-pub type DatLo = Data;
-pub type DatHi = Data;
-
-pub type AddLo = DatLo;
-pub type AddHi = DatHi;
+pub type XData = u16;
+pub type Addr = u16;
 
 #[derive(Debug, Clone, Copy, FromPrimitive)]
 #[repr(u8)]
@@ -34,7 +29,7 @@ pub enum Register {
     E,
     H,
     L,
-    HL,
+    M,
     #[num_enum(default)]
     A,
 }
@@ -67,7 +62,7 @@ pub enum CarryCode {
 #[derive(Debug)]
 pub enum Instruction {
     Nop,
-    Lxi(RegisterPair, DatLo, DatHi),
+    Lxi(RegisterPair, XData),
     Stax(RegisterPair),
     Inx(RegisterPair),
     Inr(Register),
@@ -80,27 +75,27 @@ pub enum Instruction {
     Rrc,
     Ral,
     Rar,
-    Shld(AddLo, AddHi),
+    Shld(Addr),
     Daa,
-    Lhld(AddLo, AddHi),
+    Lhld(Addr),
     Cma,
-    Sta(AddLo, AddHi),
+    Sta(Addr),
     Stc,
-    Lda(AddLo, AddHi),
+    Lda(Addr),
     Cmc,
     Mov(Register, Register),
     Hlt,
     AluR(AluMode, Register),
     Rcc(CarryCode),
     Pop(RegisterPair),
-    Jcc(CarryCode, AddLo, AddHi),
-    Jmp(AddLo, AddHi),
-    Ccc(CarryCode, AddLo, AddHi),
+    Jcc(CarryCode, Addr),
+    Jmp(Addr),
+    Ccc(CarryCode, Addr),
     Push(RegisterPair),
     AluI(AluMode, Data),
-    Rst(Addr),
+    Rst(u8),
     Ret,
-    Call(AddLo, AddHi),
+    Call(Addr),
     Out(Port),
     In(Port),
     Xthl,
@@ -124,6 +119,10 @@ where
     pub fn new(bytes: B) -> Self {
         Self { bytes }
     }
+}
+
+fn fuse_bytes(lo: u8, hi: u8) -> u16 {
+    ((hi as u16) << 8) + lo as u16
 }
 
 impl<B> Iterator for Disassembler<B>
@@ -156,7 +155,10 @@ where
         if opcode == 0 {
             Some(Instruction::Nop)
         } else if opcode & rp_mask ^ 0x01 == 0 {
-            Some(Instruction::Lxi(rp, self.bytes.next()?, self.bytes.next()?))
+            Some(Instruction::Lxi(
+                rp,
+                fuse_bytes(self.bytes.next()?, self.bytes.next()?),
+            ))
         } else if opcode & rp_mask ^ 0x02 == 0 {
             Some(Instruction::Stax(rp))
         } else if opcode & rp_mask ^ 0x03 == 0 {
@@ -182,19 +184,31 @@ where
         } else if opcode ^ 0x1F == 0 {
             Some(Instruction::Rar)
         } else if opcode ^ 0x22 == 0 {
-            Some(Instruction::Shld(self.bytes.next()?, self.bytes.next()?))
+            Some(Instruction::Shld(fuse_bytes(
+                self.bytes.next()?,
+                self.bytes.next()?,
+            )))
         } else if opcode ^ 0x27 == 0 {
             Some(Instruction::Daa)
         } else if opcode ^ 0x2A == 0 {
-            Some(Instruction::Lhld(self.bytes.next()?, self.bytes.next()?))
+            Some(Instruction::Lhld(fuse_bytes(
+                self.bytes.next()?,
+                self.bytes.next()?,
+            )))
         } else if opcode ^ 0x2F == 0 {
             Some(Instruction::Cma)
         } else if opcode ^ 0x32 == 0 {
-            Some(Instruction::Sta(self.bytes.next()?, self.bytes.next()?))
+            Some(Instruction::Sta(fuse_bytes(
+                self.bytes.next()?,
+                self.bytes.next()?,
+            )))
         } else if opcode ^ 0x37 == 0 {
             Some(Instruction::Stc)
         } else if opcode ^ 0x3A == 0 {
-            Some(Instruction::Lda(self.bytes.next()?, self.bytes.next()?))
+            Some(Instruction::Lda(fuse_bytes(
+                self.bytes.next()?,
+                self.bytes.next()?,
+            )))
         } else if opcode ^ 0x3F == 0 {
             Some(Instruction::Cmc)
         } else if opcode & ddd_mask & sss_mask ^ 0x40 == 0 {
@@ -208,11 +222,20 @@ where
         } else if opcode & rp_mask ^ 0xC1 == 0 {
             Some(Instruction::Pop(rp))
         } else if opcode & cc_mask ^ 0xC2 == 0 {
-            Some(Instruction::Jcc(cc, self.bytes.next()?, self.bytes.next()?))
+            Some(Instruction::Jcc(
+                cc,
+                fuse_bytes(self.bytes.next()?, self.bytes.next()?),
+            ))
         } else if opcode ^ 0xC3 == 0 {
-            Some(Instruction::Jmp(self.bytes.next()?, self.bytes.next()?))
+            Some(Instruction::Jmp(fuse_bytes(
+                self.bytes.next()?,
+                self.bytes.next()?,
+            )))
         } else if opcode & cc_mask ^ 0xC4 == 0 {
-            Some(Instruction::Ccc(cc, self.bytes.next()?, self.bytes.next()?))
+            Some(Instruction::Ccc(
+                cc,
+                fuse_bytes(self.bytes.next()?, self.bytes.next()?),
+            ))
         } else if opcode & rp_mask ^ 0xC5 == 0 {
             Some(Instruction::Push(rp))
         } else if opcode & alu_mask ^ 0xC6 == 0 {
@@ -222,7 +245,10 @@ where
         } else if opcode ^ 0xC9 == 0 {
             Some(Instruction::Ret)
         } else if opcode ^ 0xCD == 0 {
-            Some(Instruction::Call(self.bytes.next()?, self.bytes.next()?))
+            Some(Instruction::Call(fuse_bytes(
+                self.bytes.next()?,
+                self.bytes.next()?,
+            )))
         } else if opcode ^ 0xD3 == 0 {
             Some(Instruction::Out(self.bytes.next()?))
         } else if opcode ^ 0xDB == 0 {
