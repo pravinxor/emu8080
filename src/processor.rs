@@ -26,6 +26,7 @@ impl Iterator for State {
     }
 }
 
+#[derive(Default)]
 pub struct Processor {
     state: State,
 }
@@ -37,14 +38,6 @@ impl Processor {
             .iter_mut()
             .zip(program)
             .for_each(|(mem, prog)| *mem = prog);
-    }
-}
-
-impl Default for Processor {
-    fn default() -> Self {
-        Self {
-            state: State::default(),
-        }
     }
 }
 
