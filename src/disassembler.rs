@@ -1,7 +1,4 @@
-use std::{
-    ops::{Index, IndexMut},
-    slice::SliceIndex,
-};
+use std::ops::{Index, Range};
 
 use num_enum::{FromPrimitive, IntoPrimitive};
 
@@ -48,6 +45,12 @@ pub enum RegisterPair {
     SP, // Stack pointer
     #[num_enum(default)]
     Invalid,
+}
+
+impl From<RegisterPair> for Range<usize> {
+    fn from(rp: RegisterPair) -> Self {
+        rp as usize * 2..rp as usize * 2 + 1
+    }
 }
 
 #[derive(Debug, Clone, Copy, FromPrimitive)]
