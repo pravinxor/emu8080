@@ -39,10 +39,9 @@ pub enum Register {
 #[derive(Debug, Clone, Copy, FromPrimitive, IntoPrimitive)]
 #[repr(u8)]
 pub enum RegisterPair {
-    BC,
-    DE,
-    FH,
-    SP, // Stack pointer
+    Bc,
+    De,
+    Hl,
     #[num_enum(default)]
     Invalid,
 }
