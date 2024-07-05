@@ -1,4 +1,9 @@
-use num_enum::FromPrimitive;
+use std::{
+    ops::{Index, IndexMut},
+    slice::SliceIndex,
+};
+
+use num_enum::{FromPrimitive, IntoPrimitive};
 
 pub type Data = u8;
 pub type Port = u8;
@@ -20,7 +25,7 @@ pub enum AluMode {
     Cmp,
 }
 
-#[derive(Debug, Clone, Copy, FromPrimitive)]
+#[derive(Debug, Clone, Copy, FromPrimitive, IntoPrimitive)]
 #[repr(u8)]
 pub enum Register {
     B,
@@ -34,7 +39,7 @@ pub enum Register {
     A,
 }
 
-#[derive(Debug, Clone, Copy, FromPrimitive)]
+#[derive(Debug, Clone, Copy, FromPrimitive, IntoPrimitive)]
 #[repr(u8)]
 pub enum RegisterPair {
     BC,
