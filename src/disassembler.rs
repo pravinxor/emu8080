@@ -126,10 +126,6 @@ where
     }
 }
 
-fn fuse_bytes(lo: u8, hi: u8) -> u16 {
-    ((hi as u16) << 8) + lo as u16
-}
-
 impl<B> Iterator for Disassembler<B>
 where
     B: Iterator<Item = u8>,
@@ -162,7 +158,7 @@ where
         } else if opcode & rp_mask ^ 0x01 == 0 {
             Some(Instruction::Lxi(
                 rp,
-                fuse_bytes(self.bytes.next()?, self.bytes.next()?),
+                u16::from_le_bytes([self.bytes.next()?, self.bytes.next()?]),
             ))
         } else if opcode & rp_mask ^ 0x02 == 0 {
             Some(Instruction::Stax(rp))
@@ -189,31 +185,31 @@ where
         } else if opcode ^ 0x1F == 0 {
             Some(Instruction::Rar)
         } else if opcode ^ 0x22 == 0 {
-            Some(Instruction::Shld(fuse_bytes(
+            Some(Instruction::Shld(u16::from_le_bytes([
                 self.bytes.next()?,
                 self.bytes.next()?,
-            )))
+            ])))
         } else if opcode ^ 0x27 == 0 {
             Some(Instruction::Daa)
         } else if opcode ^ 0x2A == 0 {
-            Some(Instruction::Lhld(fuse_bytes(
+            Some(Instruction::Lhld(u16::from_le_bytes([
                 self.bytes.next()?,
                 self.bytes.next()?,
-            )))
+            ])))
         } else if opcode ^ 0x2F == 0 {
             Some(Instruction::Cma)
         } else if opcode ^ 0x32 == 0 {
-            Some(Instruction::Sta(fuse_bytes(
+            Some(Instruction::Sta(u16::from_le_bytes([
                 self.bytes.next()?,
                 self.bytes.next()?,
-            )))
+            ])))
         } else if opcode ^ 0x37 == 0 {
             Some(Instruction::Stc)
         } else if opcode ^ 0x3A == 0 {
-            Some(Instruction::Lda(fuse_bytes(
+            Some(Instruction::Lda(u16::from_le_bytes([
                 self.bytes.next()?,
                 self.bytes.next()?,
-            )))
+            ])))
         } else if opcode ^ 0x3F == 0 {
             Some(Instruction::Cmc)
         } else if opcode & ddd_mask & sss_mask ^ 0x40 == 0 {
@@ -229,17 +225,17 @@ where
         } else if opcode & cc_mask ^ 0xC2 == 0 {
             Some(Instruction::Jcc(
                 cc,
-                fuse_bytes(self.bytes.next()?, self.bytes.next()?),
+                u16::from_le_bytes([self.bytes.next()?, self.bytes.next()?]),
             ))
         } else if opcode ^ 0xC3 == 0 {
-            Some(Instruction::Jmp(fuse_bytes(
+            Some(Instruction::Jmp(u16::from_le_bytes([
                 self.bytes.next()?,
                 self.bytes.next()?,
-            )))
+            ])))
         } else if opcode & cc_mask ^ 0xC4 == 0 {
             Some(Instruction::Ccc(
                 cc,
-                fuse_bytes(self.bytes.next()?, self.bytes.next()?),
+                u16::from_le_bytes([self.bytes.next()?, self.bytes.next()?]),
             ))
         } else if opcode & rp_mask ^ 0xC5 == 0 {
             Some(Instruction::Push(rp))
@@ -250,10 +246,10 @@ where
         } else if opcode ^ 0xC9 == 0 {
             Some(Instruction::Ret)
         } else if opcode ^ 0xCD == 0 {
-            Some(Instruction::Call(fuse_bytes(
+            Some(Instruction::Call(u16::from_le_bytes([
                 self.bytes.next()?,
                 self.bytes.next()?,
-            )))
+            ])))
         } else if opcode ^ 0xD3 == 0 {
             Some(Instruction::Out(self.bytes.next()?))
         } else if opcode ^ 0xDB == 0 {
